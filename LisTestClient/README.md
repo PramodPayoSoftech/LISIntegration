@@ -1,13 +1,27 @@
-# LIS Test Client
+# LIS Test Client - ASTM Protocol
 
-A test client for the LIS Integration application. This console application simulates a Laboratory Information System (LIS) sending data to the TCP listener.
+A test client for the LIS Integration application that communicates using the ASTM protocol. This console application simulates a Laboratory Information System (LIS) sending data in ASTM format to the TCP listener.
+
+## About ASTM Protocol
+
+ASTM E1381/E1394 is a standard protocol used for interfacing laboratory instruments to information systems. The protocol defines:
+
+- A session layer for establishing communication
+- A message structure for sending laboratory data
+- Error detection and recovery mechanisms
+
+This test client implements the basic ASTM communication protocol:
+
+1. Session establishment with ENQ character
+2. Data transfer in framed messages with checksums
+3. Session termination with EOT character
 
 ## Features
 
-- Send test messages to verify the LIS Integration application works
-- Send simple text messages or sample HL7-like LIS messages
-- Send multiple messages with configurable delay
-- Send custom messages
+- Send test messages using proper ASTM protocol format
+- Send simple ASTM messages or comprehensive laboratory results
+- Send multiple ASTM messages with configurable delay
+- Send custom messages formatted as ASTM records
 
 ## Usage
 
@@ -28,10 +42,10 @@ dotnet run 127.0.0.1 8080
 
 ### Menu Options
 
-1. **Send a simple test message** - Sends a basic text message
-2. **Send a sample LIS message** - Sends a formatted HL7-like message with sample lab results
-3. **Send multiple messages with delay** - Sends multiple messages with a configurable delay between them
-4. **Send a custom message** - Enter your own message to send
+1. **Send a simple ASTM test message** - Sends a basic ASTM message with header, patient, and terminator records
+2. **Send a sample ASTM LIS message** - Sends a comprehensive ASTM message with CBC lab results
+3. **Send multiple ASTM messages with delay** - Sends multiple ASTM messages with a configurable delay between them
+4. **Send a custom ASTM message** - Enter your own text to be included in an ASTM message
 5. **Exit** - Close the application
 
 ## Testing Procedure
@@ -39,19 +53,39 @@ dotnet run 127.0.0.1 8080
 1. First, make sure the LIS Integration application is running
 2. Run this test client
 3. Choose an option to send data
-4. Verify in the LIS Integration web interface that the data was received and saved
+4. The client will attempt to establish an ASTM session and send the message frames
+5. Verify in the LIS Integration web interface that the data was received and saved
 
-## Example Message
+## ASTM Message Format
 
-The sample LIS message mimics an HL7 format with patient information and lab results:
+This client implements the ASTM E1381/E1394 standard frame format:
 
 ```
-MSH|^~\&|LIS|LAB|LISIntegration|HOSPITAL|20230615123456||ORU^R01|203|P|2.3
-PID|1||12345^^^MRN||DOE^JOHN||19800101|M|||123 MAIN ST^^ANYTOWN^NY^12345||(555)555-5555||S||MRN12345|123-45-6789
-OBR|1|845439^LAB|1000^LAB|CBC^COMPLETE BLOOD COUNT|||20230615123000|||||||20230615123000|BLOOD&BLOOD^WHOLE BLOOD|DR SMITH||||||20230615123400||LAB|F||
-OBX|1|NM|WBC^WHITE BLOOD CELL COUNT|1|10.5|K/uL|4.5-11.0|N|||F
-OBX|2|NM|RBC^RED BLOOD CELL COUNT|1|4.5|M/uL|4.5-5.5|N|||F
-OBX|3|NM|HGB^HEMOGLOBIN|1|14.0|g/dL|13.5-17.5|N|||F
-OBX|4|NM|HCT^HEMATOCRIT|1|42.0|%|41.0-53.0|N|||F
-OBX|5|NM|PLT^PLATELET COUNT|1|250|K/uL|150-450|N|||F
+<STX><Frame Number><Text><ETB or ETX><Checksum><CR><LF>
 ```
+
+Where:
+
+- STX: Start of Text character (ASCII 0x02)
+- Frame Number: A single digit from 1-7
+- Text: The actual message data
+- ETB/ETX: End of Transmission Block (0x17) or End of Text (0x03)
+- Checksum: Two hex digits representing the modulo 256 sum of all bytes after STX
+- CR LF: Carriage Return and Line Feed (0x0D 0x0A)
+
+## Example ASTM Message Records
+
+The ASTM messages contain records with the following format:
+
+```
+Record Type|Field1|Field2|Field3|...|
+```
+
+Record types include:
+
+- H: Header record
+- P: Patient record
+- O: Order record
+- R: Result record
+- C: Comment record
+- L: Terminator record

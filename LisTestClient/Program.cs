@@ -3,15 +3,28 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace LisTestClient
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        // ASTM Constants
+        private const byte STX = 0x02; // Start of Text
+        private const byte ETX = 0x03; // End of Text
+        private const byte EOT = 0x04; // End of Transmission
+        private const byte ENQ = 0x05; // Enquiry
+        private const byte ACK = 0x06; // Acknowledge
+        private const byte NAK = 0x15; // Negative Acknowledge
+        private const byte ETB = 0x17; // End of Transmission Block
+        private const byte LF = 0x0A;  // Line Feed
+        private const byte CR = 0x0D;  // Carriage Return
+        private const byte FS = 0x1C;  // Field Separator
+
+        private static async Task Main(string[] args)
         {
-            Console.WriteLine("LIS Test Client");
-            Console.WriteLine("==============");
+            Console.WriteLine("LIS Test Client - ASTM Protocol");
+            Console.WriteLine("===============================");
 
             string serverIp = "127.0.0.1";
             int serverPort = 8080;
@@ -26,10 +39,10 @@ namespace LisTestClient
             Console.WriteLine($"Target server: {serverIp}:{serverPort}");
             Console.WriteLine();
             Console.WriteLine("Select an option:");
-            Console.WriteLine("1. Send a simple test message");
-            Console.WriteLine("2. Send a sample LIS message");
-            Console.WriteLine("3. Send multiple messages with delay");
-            Console.WriteLine("4. Send a custom message");
+            Console.WriteLine("1. Send a simple ASTM test message");
+            Console.WriteLine("2. Send a sample ASTM LIS message (CBC results)");
+            Console.WriteLine("3. Send multiple ASTM messages with delay");
+            Console.WriteLine("4. Send a custom ASTM message");
             Console.WriteLine("5. Exit");
 
             bool exit = false;
@@ -41,22 +54,27 @@ namespace LisTestClient
                 switch (option)
                 {
                     case "1":
-                        await SendMessageAsync(serverIp, serverPort, "TEST_MESSAGE_FROM_LIS_MACHINE");
+                        await SendAstmMessageAsync(serverIp, serverPort, GenerateSimpleAstmMessage());
                         break;
+
                     case "2":
-                        await SendMessageAsync(serverIp, serverPort, GenerateSampleLisMessage());
+                        await SendAstmMessageAsync(serverIp, serverPort, GenerateSampleAstmMessage());
                         break;
+
                     case "3":
-                        await SendMultipleMessagesAsync(serverIp, serverPort);
+                        await SendMultipleAstmMessagesAsync(serverIp, serverPort);
                         break;
+
                     case "4":
-                        Console.Write("Enter your custom message: ");
+                        Console.Write("Enter your custom message text (will be formatted as ASTM): ");
                         string customMessage = Console.ReadLine();
-                        await SendMessageAsync(serverIp, serverPort, customMessage);
+                        await SendAstmMessageAsync(serverIp, serverPort, GenerateCustomAstmMessage(customMessage));
                         break;
+
                     case "5":
                         exit = true;
                         break;
+
                     default:
                         Console.WriteLine("Invalid option. Please try again.");
                         break;
@@ -64,7 +82,7 @@ namespace LisTestClient
             }
         }
 
-        static async Task SendMessageAsync(string serverIp, int serverPort, string message)
+        private static async Task SendAstmMessageAsync(string serverIp, int serverPort, List<string> astmFrames)
         {
             try
             {
@@ -76,13 +94,92 @@ namespace LisTestClient
 
                     using (NetworkStream stream = client.GetStream())
                     {
-                        byte[] data = Encoding.ASCII.GetBytes(message);
-                        await stream.WriteAsync(data, 0, data.Length);
-                        Console.WriteLine($"Sent message ({data.Length} bytes)");
-                        Console.WriteLine($"Message content: {message}");
+                        // Establish communication session with ENQ
+                        byte[] enqBytes = new byte[] { ENQ };
+                        await stream.WriteAsync(enqBytes, 0, enqBytes.Length);
+                        Console.WriteLine("Sent ENQ to establish session");
+
+                        // Read ACK response (in real implementation, should wait for ACK)
+                        byte[] buffer = new byte[1];
+                        try
+                        {
+                            // Set read timeout to 5 seconds
+                            client.ReceiveTimeout = 5000;
+                            int bytesRead = await stream.ReadAsync(buffer, 0, 1);
+                            if (bytesRead == 1 && buffer[0] == ACK)
+                            {
+                                Console.WriteLine("Received ACK, proceeding with data transfer");
+                            }
+                            else if (bytesRead == 1)
+                            {
+                                Console.WriteLine($"Received unexpected response: 0x{buffer[0]:X2}. Proceeding anyway.");
+                            }
+                            else
+                            {
+                                Console.WriteLine("No response received, proceeding anyway.");
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("No ACK received within timeout. Proceeding anyway.");
+                        }
+
+                        // Send each frame
+                        for (int i = 0; i < astmFrames.Count; i++)
+                        {
+                            string frame = astmFrames[i];
+                            byte frameNum = (byte)((i % 7) + 1); // Frame numbers 1-7
+
+                            // Format the frame with STX, frame number, text, ETX/ETB, and checksum
+                            byte[] frameBytes;
+
+                            if (i == astmFrames.Count - 1)
+                            {
+                                // Last frame uses ETX
+                                frameBytes = FormatAstmFrame(frame, frameNum, true);
+                            }
+                            else
+                            {
+                                // Intermediate frames use ETB
+                                frameBytes = FormatAstmFrame(frame, frameNum, false);
+                            }
+
+                            await stream.WriteAsync(frameBytes, 0, frameBytes.Length);
+                            Console.WriteLine($"Sent frame {i + 1} of {astmFrames.Count} ({frameBytes.Length} bytes)");
+
+                            // Wait for ACK (in real implementation)
+                            try
+                            {
+                                int bytesRead = await stream.ReadAsync(buffer, 0, 1);
+                                if (bytesRead == 1 && buffer[0] == ACK)
+                                {
+                                    Console.WriteLine("Received ACK for frame");
+                                }
+                                else if (bytesRead == 1 && buffer[0] == NAK)
+                                {
+                                    Console.WriteLine("Received NAK, should retry but continuing anyway");
+                                }
+                                else if (bytesRead == 1)
+                                {
+                                    Console.WriteLine($"Received unexpected response: 0x{buffer[0]:X2}");
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("No ACK received within timeout. Continuing anyway.");
+                            }
+
+                            // Small delay between frames
+                            await Task.Delay(200);
+                        }
+
+                        // End transmission with EOT
+                        byte[] eotBytes = new byte[] { EOT };
+                        await stream.WriteAsync(eotBytes, 0, eotBytes.Length);
+                        Console.WriteLine("Sent EOT to terminate session");
                     }
                 }
-                Console.WriteLine("Connection closed.");
+                Console.WriteLine("ASTM communication session completed.");
             }
             catch (Exception ex)
             {
@@ -90,27 +187,76 @@ namespace LisTestClient
             }
         }
 
-        static async Task SendMultipleMessagesAsync(string serverIp, int serverPort)
+        private static byte[] FormatAstmFrame(string text, byte frameNumber, bool isLastFrame)
         {
-            Console.Write("Number of messages to send (1-100): ");
-            if (!int.TryParse(Console.ReadLine(), out int count) || count < 1 || count > 100)
+            using (var ms = new System.IO.MemoryStream())
             {
-                Console.WriteLine("Invalid number. Using default of 5.");
-                count = 5;
+                // STX (Start of Text)
+                ms.WriteByte(STX);
+
+                // Frame number (1-7)
+                byte[] frameNumBytes = Encoding.ASCII.GetBytes(frameNumber.ToString());
+                ms.Write(frameNumBytes, 0, frameNumBytes.Length);
+
+                // Data/Text
+                byte[] dataBytes = Encoding.ASCII.GetBytes(text);
+                ms.Write(dataBytes, 0, dataBytes.Length);
+
+                // ETX or ETB
+                ms.WriteByte(isLastFrame ? ETX : ETB);
+
+                // Calculate checksum (sum of all bytes after STX mod 256)
+                byte checksum = 0;
+                byte[] buffer = ms.ToArray();
+                for (int i = 1; i < buffer.Length; i++) // Start after STX
+                {
+                    checksum = (byte)(checksum + buffer[i]);
+                }
+                checksum = (byte)(checksum % 256);
+
+                // Add checksum as two hex chars
+                string checksumHex = checksum.ToString("X2");
+                byte[] checksumBytes = Encoding.ASCII.GetBytes(checksumHex);
+                ms.Write(checksumBytes, 0, checksumBytes.Length);
+
+                // Add CR LF
+                ms.WriteByte(CR);
+                ms.WriteByte(LF);
+
+                return ms.ToArray();
+            }
+        }
+
+        private static async Task SendMultipleAstmMessagesAsync(string serverIp, int serverPort)
+        {
+            Console.Write("Number of messages to send (1-10): ");
+            if (!int.TryParse(Console.ReadLine(), out int count) || count < 1 || count > 10)
+            {
+                Console.WriteLine("Invalid number. Using default of 3.");
+                count = 3;
             }
 
-            Console.Write("Delay between messages in milliseconds (100-10000): ");
-            if (!int.TryParse(Console.ReadLine(), out int delay) || delay < 100 || delay > 10000)
+            Console.Write("Delay between messages in milliseconds (1000-10000): ");
+            if (!int.TryParse(Console.ReadLine(), out int delay) || delay < 1000 || delay > 10000)
             {
-                Console.WriteLine("Invalid delay. Using default of 1000ms.");
-                delay = 1000;
+                Console.WriteLine("Invalid delay. Using default of 2000ms.");
+                delay = 2000;
             }
 
             for (int i = 1; i <= count; i++)
             {
-                Console.WriteLine($"Sending message {i} of {count}...");
-                string message = $"TEST_MESSAGE_{i}|Timestamp={DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}";
-                await SendMessageAsync(serverIp, serverPort, message);
+                Console.WriteLine($"Sending ASTM message {i} of {count}...");
+                List<string> frames = new List<string>
+                {
+                    $"H|\\^&|||LIS Test Client|||||Host||P|1|{DateTime.Now:yyyyMMddHHmmss}",
+                    $"P|1||ID{i:D5}|Smith^John^J||19800101|M||||||||||||||||||",
+                    $"O|1|SMP{i:D5}||^^^CBC|R||{DateTime.Now:yyyyMMddHHmmss}|||||A||||||||||||||||",
+                    $"R|1|^^^WBC|{i + 5.5:F1}|10^3/uL|4.0-11.0||||F||||{DateTime.Now:yyyyMMddHHmmss}",
+                    $"R|2|^^^RBC|{i + 4.0:F2}|10^6/uL|4.50-5.50||||F||||{DateTime.Now:yyyyMMddHHmmss}",
+                    $"L|1|N"
+                };
+
+                await SendAstmMessageAsync(serverIp, serverPort, frames);
 
                 if (i < count)
                 {
@@ -120,19 +266,64 @@ namespace LisTestClient
             }
         }
 
-        static string GenerateSampleLisMessage()
+        private static List<string> GenerateSimpleAstmMessage()
         {
-            // This is a simplified example of an HL7-like message format
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("MSH|^~\\&|LIS|LAB|LISIntegration|HOSPITAL|20230615123456||ORU^R01|203|P|2.3");
-            sb.AppendLine("PID|1||12345^^^MRN||DOE^JOHN||19800101|M|||123 MAIN ST^^ANYTOWN^NY^12345||(555)555-5555||S||MRN12345|123-45-6789");
-            sb.AppendLine("OBR|1|845439^LAB|1000^LAB|CBC^COMPLETE BLOOD COUNT|||20230615123000|||||||20230615123000|BLOOD&BLOOD^WHOLE BLOOD|DR SMITH||||||20230615123400||LAB|F||");
-            sb.AppendLine("OBX|1|NM|WBC^WHITE BLOOD CELL COUNT|1|10.5|K/uL|4.5-11.0|N|||F");
-            sb.AppendLine("OBX|2|NM|RBC^RED BLOOD CELL COUNT|1|4.5|M/uL|4.5-5.5|N|||F");
-            sb.AppendLine("OBX|3|NM|HGB^HEMOGLOBIN|1|14.0|g/dL|13.5-17.5|N|||F");
-            sb.AppendLine("OBX|4|NM|HCT^HEMATOCRIT|1|42.0|%|41.0-53.0|N|||F");
-            sb.AppendLine("OBX|5|NM|PLT^PLATELET COUNT|1|250|K/uL|150-450|N|||F");
-            return sb.ToString();
+            // Simple ASTM message with header, patient, and terminator records
+            List<string> frames = new List<string>
+            {
+                $"H|\\^&|||LIS Test Client|||||Host||P|1|{DateTime.Now:yyyyMMddHHmmss}",
+                "P|1||12345|Doe^John^^^||19901231|M|||123 Main St^^Anytown^NY^12345||5551234|||||||||||",
+                "L|1|N"
+            };
+
+            return frames;
+        }
+
+        private static List<string> GenerateCustomAstmMessage(string customText)
+        {
+            // Create ASTM message with the custom text in the comments field of the patient record
+            List<string> frames = new List<string>
+            {
+                $"H|\\^&|||LIS Test Client|||||Host||P|1|{DateTime.Now:yyyyMMddHHmmss}",
+                $"P|1||CUSTOM|Doe^John^^^||19901231|M|||||||||||||||{customText}||",
+                "L|1|N"
+            };
+
+            return frames;
+        }
+
+        private static List<string> GenerateSampleAstmMessage()
+        {
+            // Comprehensive ASTM message for laboratory results
+            List<string> frames = new List<string>
+            {
+                // Header Record
+                $"H|\\^&|||LIS Test Client|||||Host||P|1|{DateTime.Now:yyyyMMddHHmmss}",
+                
+                // Patient Record
+                "P|1||PT00001|Doe^John^J||19800101|M|||123 Main St^^Anytown^NY^12345||5551234|||||||||||",
+                
+                // Order Record
+                $"O|1|SMP00001||^^^CBC|R||{DateTime.Now:yyyyMMddHHmmss}|||||A||||||||||||||||",
+                
+                // Result Records (CBC)
+                "R|1|^^^WBC|10.5|10^3/uL|4.0-11.0||||F",
+                "R|2|^^^RBC|4.8|10^6/uL|4.50-5.50||||F",
+                "R|3|^^^HGB|14.0|g/dL|13.5-17.5||||F",
+                "R|4|^^^HCT|42.0|%|41.0-53.0||||F",
+                "R|5|^^^PLT|250|10^3/uL|150-450||||F",
+                "R|6|^^^MCH|29.0|pg|26.0-34.0||||F",
+                "R|7|^^^MCHC|34.0|g/dL|31.0-37.0||||F",
+                "R|8|^^^MCV|88.0|fL|80.0-100.0||||F",
+                
+                // Comment Record
+                "C|1|L|Sample collected at 8:00 AM||",
+                
+                // Terminator Record
+                "L|1|N"
+            };
+
+            return frames;
         }
     }
 }

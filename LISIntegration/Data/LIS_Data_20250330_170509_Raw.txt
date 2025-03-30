@@ -1,0 +1,18 @@
+Raw ASTM Data (Hex):
+05-02-31-48-7C-5C-5E-26-7C-7C-7C-4C-49-53-20-54-65-73-74-20-43-6C-69-65-6E-74-7C-7C-7C-7C-7C-48-6F-73-74-7C-7C-50-7C-31-7C-32-30-32-35-30-33-33-30-31-37-30-35-30-38-17-43-36-0D-0A-02-32-50-7C-31-7C-7C-31-32-33-34-35-7C-44-6F-65-5E-4A-6F-68-6E-5E-5E-5E-7C-7C-31-39-39-30-31-32-33-31-7C-4D-7C-7C-7C-31-32-33-20-4D-61-69-6E-20-53-74-5E-5E-41-6E-79-74-6F-77-6E-5E-4E-59-5E-31-32-33-34-35-7C-7C-35-35-35-31-32-33-34-7C-7C-7C-7C-7C-7C-7C-7C-7C-7C-7C-17-38-43-0D-0A-02-33-4C-7C-31-7C-4E-03-46-39-0D-0A-04
+
+Control Characters:
+Position 0: 0x05 - ENQ (Enquiry)
+Position 1: 0x02 - STX (Start of Text)
+Position 55: 0x17 - ETB (End of Transmission Block)
+Position 58: 0x0D - CR (Carriage Return)
+Position 59: 0x0A - LF (Line Feed)
+Position 60: 0x02 - STX (Start of Text)
+Position 148: 0x17 - ETB (End of Transmission Block)
+Position 151: 0x0D - CR (Carriage Return)
+Position 152: 0x0A - LF (Line Feed)
+Position 153: 0x02 - STX (Start of Text)
+Position 160: 0x03 - ETX (End of Text)
+Position 163: 0x0D - CR (Carriage Return)
+Position 164: 0x0A - LF (Line Feed)
+Position 165: 0x04 - EOT (End of Transmission)
