@@ -4,8 +4,8 @@
 
 <div class="text-center">
     <h1 class="display-4">LIS Integration with ASTM Protocol</h1>
-    <p class="lead">A TCP listener that receives and processes ASTM E1381/E1394 formatted data from Laboratory
-        Information Systems</p>
+    <p class="lead">An application that implements the ASTM E1381/E1394 protocol to receive and process formatted data
+        from Laboratory Information Systems</p>
 </div>
 
 <div class="row mt-4">
@@ -17,14 +17,14 @@
             <div class="card-body">
                 <p>This application:</p>
                 <ol>
-                    <li>Listens for incoming TCP connections from your LIS machine</li>
-                    <li>Processes ASTM protocol messages (ENQ, ACK, frame data, EOT)</li>
+                    <li>Listens for incoming network connections from your LIS machine</li>
+                    <li>Implements the full ASTM protocol (ENQ, ACK, frame data, EOT)</li>
                     <li>Extracts data from ASTM frames with proper checksums</li>
                     <li>Saves both human-readable text and raw protocol data</li>
                     <li>Provides a web interface to view and manage the data</li>
                 </ol>
                 <p>
-                    The ASTM listener runs as a background service as soon as the application starts.
+                    The ASTM protocol handler runs as a background service as soon as the application starts.
                     You can configure the IP address, port, and storage location through the ASTM Settings page.
                 </p>
             </div>

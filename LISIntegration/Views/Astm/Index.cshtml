@@ -8,16 +8,16 @@
 
 @if (TempData["Message"] != null)
 {
-            <div class="alert alert-success">
-                @TempData["Message"]
-            </div>
+        <div class="alert alert-success">
+            @TempData["Message"]
+        </div>
 }
 
 <div class="row">
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                ASTM Listener Configuration
+                ASTM Protocol Configuration
             </div>
             <div class="card-body">
                 <form asp-action="Index" method="post">
@@ -51,17 +51,18 @@
                 Current Status
             </div>
             <div class="card-body">
-                <p>The ASTM protocol listener is currently configured to:</p>
+                <p>The ASTM protocol handler is currently configured to:</p>
                 <ul>
                     <li>Listen on: <strong>@Model.IpAddress:@Model.Port</strong></li>
                     <li>Save data to: <strong>@Model.OutputDirectory</strong></li>
                 </ul>
                 <div class="alert alert-info">
-                    <strong>ASTM Protocol Support:</strong>
+                    <strong>ASTM Protocol Implementation:</strong>
                     <ul>
-                        <li>Responds to ENQ with ACK</li>
-                        <li>Processes framed messages with checksums</li>
-                        <li>Responds to ETX/ETB with ACK</li>
+                        <li>Implements ASTM E1381/E1394 standard</li>
+                        <li>Responds to ENQ with ACK for session establishment</li>
+                        <li>Validates frame checksums for data integrity</li>
+                        <li>Responds to frames with proper ACK</li>
                         <li>Handles session termination with EOT</li>
                         <li>Saves both decoded text and raw protocol data</li>
                     </ul>
