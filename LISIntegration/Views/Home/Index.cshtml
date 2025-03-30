@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">LIS Integration</h1>
+    <p class="lead">A TCP listener to receive and store data from LIS (Laboratory Information System) machines</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                How It Works
+            </div>
+            <div class="card-body">
+                <p>This application:</p>
+                <ol>
+                    <li>Listens for incoming TCP connections from your LIS machine</li>
+                    <li>Receives data sent over the TCP connection</li>
+                    <li>Saves the received data to text files</li>
+                    <li>Provides a web interface to view and manage the data</li>
+                </ol>
+                <p>
+                    The TCP listener runs as a background service as soon as the application starts.
+                    You can configure the IP address, port, and storage location through the TCP Settings page.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Quick Links
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a asp-controller="Tcp" asp-action="Index" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">TCP Settings</h5>
+                        </div>
+                        <p class="mb-1">Configure the TCP listener settings (IP address, port, etc.)</p>
+                    </a>
+                    <a asp-controller="Tcp" asp-action="ViewLogs" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">View Received Data</h5>
+                        </div>
+                        <p class="mb-1">Browse and view data files received from the LIS machine</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

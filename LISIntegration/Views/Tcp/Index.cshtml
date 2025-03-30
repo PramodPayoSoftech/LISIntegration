@@ -1,0 +1,71 @@
+@model LISIntegration.Models.TcpSettings
+
+@{
+    ViewData["Title"] = "TCP Settings";
+}
+
+<h1>LIS Integration TCP Settings</h1>
+
+@if (TempData["Message"] != null)
+{
+            <div class="alert alert-success">
+                @TempData["Message"]
+            </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                TCP Listener Configuration
+            </div>
+            <div class="card-body">
+                <form asp-action="Index" method="post">
+                    <div class="form-group">
+                        <label asp-for="IpAddress">IP Address</label>
+                        <input asp-for="IpAddress" class="form-control" />
+                        <span asp-validation-for="IpAddress" class="text-danger"></span>
+                        <small class="text-muted">The IP address to listen on. Use 0.0.0.0 to listen on all interfaces.</small>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Port">Port</label>
+                        <input asp-for="Port" class="form-control" />
+                        <span asp-validation-for="Port" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="OutputDirectory">Output Directory</label>
+                        <input asp-for="OutputDirectory" class="form-control" />
+                        <span asp-validation-for="OutputDirectory" class="text-danger"></span>
+                        <small class="text-muted">Directory where received data will be saved as text files.</small>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Current Status
+            </div>
+            <div class="card-body">
+                <p>The TCP listener is currently configured to:</p>
+                <ul>
+                    <li>Listen on: <strong>@Model.IpAddress:@Model.Port</strong></li>
+                    <li>Save data to: <strong>@Model.OutputDirectory</strong></li>
+                </ul>
+                <p>
+                    <a asp-action="ViewLogs" class="btn btn-outline-secondary">View Saved Data</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
