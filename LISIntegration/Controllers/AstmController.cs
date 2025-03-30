@@ -11,24 +11,32 @@ using LISIntegration.Models;
 
 namespace LISIntegration.Controllers
 {
-    public class TcpController : Controller
+    [Route("[controller]")]
+    public class AstmController : Controller
     {
-        private readonly ILogger<TcpController> _logger;
-        private readonly TcpSettings _tcpSettings;
+        private readonly ILogger<AstmController> _logger;
+        private readonly AstmSettings _astmSettings;
 
-        public TcpController(ILogger<TcpController> logger, IOptions<TcpSettings> tcpSettings)
+        public AstmController(ILogger<AstmController> logger, IOptions<AstmSettings> astmSettings)
         {
             _logger = logger;
-            _tcpSettings = tcpSettings.Value;
+            _astmSettings = astmSettings.Value;
         }
 
+        [HttpGet("/astm")]
+        [HttpGet("/astm/index")]
+        [HttpGet("/tcp")] // Keep old route for backward compatibility
+        [HttpGet("/tcp/index")] // Keep old route for backward compatibility
         public IActionResult Index()
         {
-            return View(_tcpSettings);
+            return View(_astmSettings);
         }
 
-        [HttpPost]
-        public IActionResult Index(TcpSettings model)
+        [HttpPost("/astm")]
+        [HttpPost("/astm/index")]
+        [HttpPost("/tcp")] // Keep old route for backward compatibility
+        [HttpPost("/tcp/index")] // Keep old route for backward compatibility
+        public IActionResult Index(AstmSettings model)
         {
             if (ModelState.IsValid)
             {
@@ -40,15 +48,17 @@ namespace LISIntegration.Controllers
                 _logger.LogInformation($"Settings update requested: IP={model.IpAddress}, Port={model.Port}, OutputDir={model.OutputDirectory}");
 
                 // Show a message to the user
-                TempData["Message"] = "Settings saved. Please restart the application for the changes to take effect.";
+                TempData["Message"] = "ASTM settings saved. Please restart the application for the changes to take effect.";
             }
 
             return View(model);
         }
 
+        [HttpGet("/astm/viewlogs")]
+        [HttpGet("/tcp/viewlogs")] // Keep old route for backward compatibility
         public IActionResult ViewLogs()
         {
-            var dataDirectory = _tcpSettings.OutputDirectory;
+            var dataDirectory = _astmSettings.OutputDirectory;
             if (!Directory.Exists(dataDirectory))
             {
                 Directory.CreateDirectory(dataDirectory);
@@ -69,6 +79,8 @@ namespace LISIntegration.Controllers
             return View(files);
         }
 
+        [HttpGet("/astm/viewfile")]
+        [HttpGet("/tcp/viewfile")] // Keep old route for backward compatibility
         public IActionResult ViewFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath) || !System.IO.File.Exists(filePath))

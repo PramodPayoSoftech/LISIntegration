@@ -27,11 +27,11 @@ namespace LISIntegration
         {
             services.AddControllersWithViews();
 
-            // Configure TCP settings
-            services.Configure<TcpSettings>(Configuration.GetSection("TcpSettings"));
+            // Configure ASTM settings
+            services.Configure<AstmSettings>(Configuration.GetSection("AstmSettings"));
 
-            // Register TCP listener as a hosted service
-            services.AddHostedService<TcpListenerService>();
+            // Register ASTM listener as a hosted service
+            services.AddHostedService<AstmListenerService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

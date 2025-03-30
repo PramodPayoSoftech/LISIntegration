@@ -1,6 +1,6 @@
 namespace LISIntegration.Models
 {
-    public class TcpSettings
+    public class AstmSettings
     {
         public string IpAddress { get; set; } = "127.0.0.1";
         public int Port { get; set; } = 8080;

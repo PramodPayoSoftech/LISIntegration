@@ -1,0 +1,55 @@
+@model LISIntegration.Models.FileContentViewModel
+
+@{
+    ViewData["Title"] = $"ASTM Data - {Model.FileName}";
+}
+
+<h1>ASTM Data: @Model.FileName</h1>
+
+<div class="mb-3">
+    <a asp-action="ViewLogs" class="btn btn-secondary">Back to ASTM Files</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        @if (Model.FileName.Contains("_Text"))
+        {
+                <span>ASTM Decoded Text</span>
+                <span class="badge badge-primary float-right">Human-Readable</span>
+        }
+        else if (Model.FileName.Contains("_Raw"))
+        {
+                <span>ASTM Raw Protocol Data</span>
+                <span class="badge badge-secondary float-right">Protocol Details</span>
+        }
+        else
+        {
+                <span>File Content</span>
+        }
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3" style="max-height: 500px; overflow-y: auto;">@Model.Content</pre>
+    </div>
+</div>
+
+@if (Model.FileName.Contains("_Text"))
+{
+        <div class="card mt-3">
+            <div class="card-header">
+                ASTM Record Format Reference
+            </div>
+            <div class="card-body">
+                <p>ASTM messages contain records with the following format:</p>
+                <pre>RecordType|Field1|Field2|Field3|...</pre>
+                <p>Common record types:</p>
+                <ul>
+                    <li><strong>H</strong> - Header Record (session information)</li>
+                    <li><strong>P</strong> - Patient Record (patient demographics)</li>
+                    <li><strong>O</strong> - Order Record (test order information)</li>
+                    <li><strong>R</strong> - Result Record (test results)</li>
+                    <li><strong>C</strong> - Comment Record</li>
+                    <li><strong>L</strong> - Terminator Record</li>
+                </ul>
+            </div>
+        </div>
+}

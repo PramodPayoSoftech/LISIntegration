@@ -13,10 +13,10 @@ using System.Collections.Generic;
 
 namespace LISIntegration.Services
 {
-    public class TcpListenerService : BackgroundService
+    public class AstmListenerService : BackgroundService
     {
-        private readonly ILogger<TcpListenerService> _logger;
-        private readonly TcpSettings _tcpSettings;
+        private readonly ILogger<AstmListenerService> _logger;
+        private readonly AstmSettings _astmSettings;
         private TcpListener _listener;
 
         // ASTM Constants
@@ -31,19 +31,19 @@ namespace LISIntegration.Services
         private const byte CR = 0x0D;  // Carriage Return
         private const byte FS = 0x1C;  // Field Separator
 
-        public TcpListenerService(ILogger<TcpListenerService> logger, IOptions<TcpSettings> tcpSettings)
+        public AstmListenerService(ILogger<AstmListenerService> logger, IOptions<AstmSettings> astmSettings)
         {
             _logger = logger;
-            _tcpSettings = tcpSettings.Value;
+            _astmSettings = astmSettings.Value;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
             {
-                _listener = new TcpListener(IPAddress.Parse(_tcpSettings.IpAddress), _tcpSettings.Port);
+                _listener = new TcpListener(IPAddress.Parse(_astmSettings.IpAddress), _astmSettings.Port);
                 _listener.Start();
-                _logger.LogInformation($"TCP Listener started on {_tcpSettings.IpAddress}:{_tcpSettings.Port}");
+                _logger.LogInformation($"ASTM Listener started on {_astmSettings.IpAddress}:{_astmSettings.Port}");
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -58,7 +58,7 @@ namespace LISIntegration.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in TCP listener");
+                _logger.LogError(ex, "Error in ASTM listener");
             }
             finally
             {
@@ -231,16 +231,16 @@ namespace LISIntegration.Services
             try
             {
                 // Ensure the directory exists
-                Directory.CreateDirectory(_tcpSettings.OutputDirectory);
+                Directory.CreateDirectory(_astmSettings.OutputDirectory);
 
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
                 // Save the extracted text data
-                string textFilePath = Path.Combine(_tcpSettings.OutputDirectory, $"LIS_Data_{timestamp}_Text.txt");
+                string textFilePath = Path.Combine(_astmSettings.OutputDirectory, $"ASTM_Data_{timestamp}_Text.txt");
                 await File.WriteAllTextAsync(textFilePath, textData, stoppingToken);
 
                 // Save the raw data with byte representation
-                string rawFilePath = Path.Combine(_tcpSettings.OutputDirectory, $"LIS_Data_{timestamp}_Raw.txt");
+                string rawFilePath = Path.Combine(_astmSettings.OutputDirectory, $"ASTM_Data_{timestamp}_Raw.txt");
 
                 StringBuilder rawDataSb = new StringBuilder();
                 rawDataSb.AppendLine("Raw ASTM Data (Hex):");
@@ -314,8 +314,8 @@ namespace LISIntegration.Services
                     _logger.LogInformation($"Received data: {receivedData}");
 
                     // Save data to a text file
-                    string filePath = Path.Combine(_tcpSettings.OutputDirectory, $"LIS_Data_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-                    Directory.CreateDirectory(_tcpSettings.OutputDirectory);
+                    string filePath = Path.Combine(_astmSettings.OutputDirectory, $"ASTM_Data_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+                    Directory.CreateDirectory(_astmSettings.OutputDirectory);
                     await File.WriteAllTextAsync(filePath, receivedData, stoppingToken);
 
                     _logger.LogInformation($"Data saved to file: {filePath}");
@@ -330,7 +330,7 @@ namespace LISIntegration.Services
         public override Task StopAsync(CancellationToken cancellationToken)
         {
             _listener?.Stop();
-            _logger.LogInformation("TCP Listener stopped");
+            _logger.LogInformation("ASTM Listener stopped");
             return base.StopAsync(cancellationToken);
         }
     }

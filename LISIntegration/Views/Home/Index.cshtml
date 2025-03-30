@@ -3,8 +3,9 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">LIS Integration</h1>
-    <p class="lead">A TCP listener to receive and store data from LIS (Laboratory Information System) machines</p>
+    <h1 class="display-4">LIS Integration with ASTM Protocol</h1>
+    <p class="lead">A TCP listener that receives and processes ASTM E1381/E1394 formatted data from Laboratory
+        Information Systems</p>
 </div>
 
 <div class="row mt-4">
@@ -17,13 +18,14 @@
                 <p>This application:</p>
                 <ol>
                     <li>Listens for incoming TCP connections from your LIS machine</li>
-                    <li>Receives data sent over the TCP connection</li>
-                    <li>Saves the received data to text files</li>
+                    <li>Processes ASTM protocol messages (ENQ, ACK, frame data, EOT)</li>
+                    <li>Extracts data from ASTM frames with proper checksums</li>
+                    <li>Saves both human-readable text and raw protocol data</li>
                     <li>Provides a web interface to view and manage the data</li>
                 </ol>
                 <p>
-                    The TCP listener runs as a background service as soon as the application starts.
-                    You can configure the IP address, port, and storage location through the TCP Settings page.
+                    The ASTM listener runs as a background service as soon as the application starts.
+                    You can configure the IP address, port, and storage location through the ASTM Settings page.
                 </p>
             </div>
         </div>
@@ -35,17 +37,17 @@
             </div>
             <div class="card-body">
                 <div class="list-group">
-                    <a asp-controller="Tcp" asp-action="Index" class="list-group-item list-group-item-action">
+                    <a asp-controller="Astm" asp-action="Index" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">TCP Settings</h5>
+                            <h5 class="mb-1">ASTM Protocol Settings</h5>
                         </div>
-                        <p class="mb-1">Configure the TCP listener settings (IP address, port, etc.)</p>
+                        <p class="mb-1">Configure the ASTM listener settings (IP address, port, etc.)</p>
                     </a>
-                    <a asp-controller="Tcp" asp-action="ViewLogs" class="list-group-item list-group-item-action">
+                    <a asp-controller="Astm" asp-action="ViewLogs" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">View Received Data</h5>
+                            <h5 class="mb-1">View ASTM Data</h5>
                         </div>
-                        <p class="mb-1">Browse and view data files received from the LIS machine</p>
+                        <p class="mb-1">Browse and view ASTM data files received from the LIS machine</p>
                     </a>
                 </div>
             </div>
